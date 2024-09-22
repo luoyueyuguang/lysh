@@ -1,5 +1,5 @@
 LDFLAGS+=-I./include -L./lib 
-CFLAGS+=-Wall
+CFLAGS+=-Werror -g
 
 
 SRC=$(wildcard ./src/*.c)
@@ -12,6 +12,7 @@ all: lysh
 lysh: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS)
 
+.INTERMEDIATE: $(OBJECTS) 
 $(OBJECTS): %.o: %.c
 	$(CC) -c -o $@ $^ $(LDFLAGS) $(CFLAGS)
 

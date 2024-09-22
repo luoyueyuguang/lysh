@@ -1,42 +1,36 @@
 #include "output.h"
 
-void output(const char *str) {
-    struct stat buf;
-    if(stat(str, &buf) == -1) {
-        printf("File not found\n");
-        return;
-    }
-    switch (buf.st_mode & S_IFMT) {
-        case S_IFREG:
-            puts("Regular file");
+void output(char *str, enum color color) {
+    switch (color) {
+        case BLACK:
+            printf(black);
             break;
-        case S_IFDIR:
-        {
+        case RED:
+            printf(red);
+            break;
+        case GREEN:
+            printf(green);
+            break;
+        case YELLOW:
+            printf(yellow);
+            break;
+        case BLUE:
             printf(blue);
-            printf("Directory");
-            printf(reset);
-            printf("\n");
             break;
-        }
-        case S_IFCHR:
-            puts("Character device");
+        case MAGENTA:
+            printf(magenta);
             break;
-        case S_IFBLK:
-            puts("Block device");
+        case CYAN:
+            printf(cyan);
             break;
-        case S_IFIFO:
-            puts("FIFO/pipe");
-            break;
-        case S_IFLNK:
-            puts("Symlink");
-            break;
-        case S_IFSOCK:
-            puts("Socket");
+        case WHITE:
+            printf(white);
             break;
         default:
-            puts("Unknown?");
+            printf(reset);
             break;
     }
-
+    printf("%s", str);
+    printf(reset);
 }
 

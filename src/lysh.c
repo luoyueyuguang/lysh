@@ -1,38 +1,72 @@
 #include "lysh.h"
 #include "output.h"
+#include "execute.h"
+#include "complete.h"
+
+extern int parse_and_execute(char *buf);
+extern char* auto_complete(char *input);
 
 int main(int argc, char *argv[]){
-    char buf[MAXLINE];
-    pid_t pid;
-    int status;
+    char* buf;
+    int buf_len = 0;
     
     if(signal(SIGINT, sig_int) == SIG_ERR){
         printf("signal error\n");
     }
 
-    printf("%% ");
-    while(fgets(buf, MAXLINE, stdin) != NULL){
-        if(buf[strlen(buf) - 1] == '\n'){
-            buf[strlen(buf) - 1] = 0;
-        }
+    char c;
+    enum color color;
+    buf = (char *)malloc(MAXLINE);
 
-        if((pid = fork()) < 0){
-            printf("fork error\n");
-        }else if(pid == 0){
-            execlp(buf, buf, (char *)0);
-            printf("couldn't execute: %s\n", buf);
-            exit(127);
+    disable_line_buffering();
+    while(1){
+        output("lysh% ", color = BLUE);
+        while((c = getchar()) != '\n'){
+            if(c == '\t'){
+                buf[buf_len++] = '\0';
+                char* tmp = auto_complete(buf);
+                printf("\r\033[K");
+                if(tmp == NULL){
+                    output("lysh% ", color =BLUE);
+                    printf("%s", buf);
+                }
+                else{
+                    output("lysh% ", color =BLUE);
+                    buf_len = strlen(tmp) + 1;
+                }
+                continue;
+            }
+            buf[buf_len++] = c;
         }
-
-        if((pid = waitpid(pid, &status, 0)) < 0){
-            printf("waitpid error\n");
+        buf[buf_len] = '\0';
+        if(signal(SIGINT, sig_int) == SIG_ERR){
+            printf("signal error\n");
         }
-        printf("%% ");
+        parse_and_execute(buf);
+        buf_len = 0;
+        printf("\n");
     }
+    enable_line_buffering();
     exit(0);
 }
 
 void sig_int(int signo){
-    printf("interrupt\n%% ");
+    enum color color;
+    output("interrupt\n%% ", color = RED);
     exit(0);
+}
+
+void disable_line_buffering() {
+    struct termios t;
+    tcgetattr(STDIN_FILENO, &t);
+    t.c_lflag &= ~ICANON;  // 禁用缓冲
+    tcsetattr(STDIN_FILENO, TCSANOW, &t);
+}
+
+// 启用行缓冲
+void enable_line_buffering() {
+    struct termios t;
+    tcgetattr(STDIN_FILENO, &t);
+    t.c_lflag |= ICANON;   // 启用缓冲
+    tcsetattr(STDIN_FILENO, TCSANOW, &t);
 }
